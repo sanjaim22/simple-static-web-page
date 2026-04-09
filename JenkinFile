@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+    environment {
+        DOCKER_IMAGE = "<sanjaim22>/static-web:latest"
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/<Sanjaim22>/<https://github.com/sanjaim22/simple-static-web-page.git>.git'
+            }
+        }
+        stage('Docker Build') {
+            steps {
+                script {
+                    sh "docker build -t ${DOCKER_IMAGE} ."
+                }
+            }
+        }
+        stage('Docker Push') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                        sh "echo $PASS | docker login -u $USER --password-stdin"
+                        sh "docker push ${DOCKER_IMAGE}"
+                    }
+                }
+            }
+        }
+        stage('Kubernetes Deploy') {
+            steps {
+                sh "kubectl apply -f deployment.yaml"
+            }
+        }
+    }
+}
